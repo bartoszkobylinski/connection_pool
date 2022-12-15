@@ -2,6 +2,7 @@ import psycopg2
 #import this
 import timeit
 import time
+import random
 test_code = '''
 try:
     db_connection = psycopg2.connect(user='bartoszkobylinski', host = '127.0.0.1', port = '5432', database = "bartoszkobylinski")
@@ -28,9 +29,19 @@ class ConnectionPool:
 
     def add_connection(self, connection):
         if len(self.connection_pool)< 100:
+            a = random.randint(1,3)
+            if a == 1:
+                connection.available = False
+            else:
+                connection.available = True
+
             self.connection_pool.append(connection)
+            
         else:
             return "There is to many active connection"
+
+    def __str__(self) -> str:
+        return f"There is {len(self.connection_pool)} connection in pool"
         
 
 class DBConnection:
@@ -43,7 +54,7 @@ class DBConnection:
         self._connection = psycopg2.connect(user=self.user, host=self.host, port=self.port, database=self.database)
         self._cursor = self._connection.cursor()
         self.timelife = None
-        self.available = None
+        self.available = True
 
     @property
     def connection(self):
@@ -96,6 +107,17 @@ def connection_to_databes():
             db_connection.close()
             print("PostgreSQL connection is closed")
 '''
+
+conn_pool = ConnectionPool()
+
+for _ in range(10):
+    a = DBConnection()
+    conn_pool.add_connection(a)
+    print(f"Is it available: {a.available}")
+
+
+print(conn_pool)
+
 
 a = DBConnection()
 print(a)
