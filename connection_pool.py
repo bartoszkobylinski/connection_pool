@@ -20,22 +20,44 @@ finally:
         print("PostgreSQL connection is closed")
 '''
 
-class DataBaseConnection:
+class DBConnection:
 
     def __init__(self, user='bartoszkobylinski', host='127.0.0.1', port='5432', database='bartoszkobylinski'):
         self.user = user
         self.host = host
         self.port = port
         self.database = database
+        self._connection = psycopg2.connect(user=self.user, host=self.host, port=self.port, database=self.database)
+        self._cursor = self._connection.cursor()
         self.timelife = None
-        self.db_connection = None
-        with self.db_connection as db_conn:
-            db_conn = psycopg2.connect(user= self.user, host=self.host, port=self.port, database=self.database)
+        self.available = None
+
+    @property
+    def connection(self):
+        return self._connection
+    
+    @property
+    def cursor(self):
+        return self._cursor
+    
+    def close(self, commit=True):
+        if commit:
+            self.commit()
+        self.connection.close()
+
+    def commit(self):
+        self.connection.commit()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def __str__(self):
         return f"Connection established with database: {self.database} at host: {self.host} on port: {self.port}"
 
-
+'''
 def connection_to_databes():
     x = range(1000000)
     try:
@@ -60,8 +82,13 @@ def connection_to_databes():
             cursor.close()
             db_connection.close()
             print("PostgreSQL connection is closed")
+'''
 
-
-
-conn = DataBaseConnection()
-print(conn)
+a = DBConnection()
+print(a)
+a.close()
+del a
+try:
+    print(a)
+except NameError as e:
+    print("object doesn't exist!")
