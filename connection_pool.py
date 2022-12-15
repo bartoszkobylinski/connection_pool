@@ -20,6 +20,19 @@ finally:
         print("PostgreSQL connection is closed")
 '''
 
+class ConnectionPool:
+
+    def __init__(self):
+        self.connection_pool = []
+        pass
+
+    def add_connection(self, connection):
+        if len(self.connection_pool)< 100:
+            self.connection_pool.append(connection)
+        else:
+            return "There is to many active connection"
+        
+
 class DBConnection:
 
     def __init__(self, user='bartoszkobylinski', host='127.0.0.1', port='5432', database='bartoszkobylinski'):
