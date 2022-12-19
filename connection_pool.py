@@ -3,46 +3,7 @@ import psycopg2
 import timeit
 import time
 import random
-test_code = '''
-try:
-    db_connection = psycopg2.connect(user='bartoszkobylinski', host = '127.0.0.1', port = '5432', database = "bartoszkobylinski")
-    cursor = db_connection.cursor()
-    print("PostgreSQL serever information")
-    print(db_connection.get_dsn_parameters(), '\n')
-    cursor.execute("SELECT version();")
-    record = cursor.fetchone()
-    print("You are connected to - ", record, "\n")
-except(Exception) as error:
-    print("Error while connecting to PostgreSQL", error)
-finally:
-    if (db_connection):
-        cursor.close()
-        db_connection.close()
-        print("PostgreSQL connection is closed")
-'''
 
-class ConnectionPool:
-
-    def __init__(self):
-        self.connection_pool = []
-        pass
-
-    def add_connection(self, connection):
-        if len(self.connection_pool)< 100:
-            a = random.randint(1,3)
-            if a == 1:
-                connection.available = False
-            else:
-                connection.available = True
-
-            self.connection_pool.append(connection)
-            
-        else:
-            return "There is to many active connection"
-
-    def __str__(self) -> str:
-        return f"There is {len(self.connection_pool)} connection in pool"
-        
 
 class DBConnection:
 
@@ -81,49 +42,62 @@ class DBConnection:
     def __str__(self):
         return f"Connection established with database: {self.database} at host: {self.host} on port: {self.port}"
 
-'''
-def connection_to_databes():
-    x = range(1000000)
-    try:
-        db_connection = psycopg2.connect(user='bartoszkobylinski',
-        host = '127.0.0.1',
-        port = '5432',
-        database = 'bartoszkobylinski'
-            )   
-        t1 = time.time()
-        for i in x:
-            cursor = db_connection.cursor()
-            #print("PostgreSQL serever information")
-            #print(db_connection.get_dsn_parameters(), '\n')
-            cursor.execute("SELECT version();")
-            record = cursor.fetchone()
-            print("You are connected to - ", record, "\n")
-        print(f"this is time:{time.time() - t1}")
-    except(Exception) as error:
-        print("Error while connecting to PostgreSQL", error)
-    finally:
-        if db_connection:
-            cursor.close()
-            db_connection.close()
-            print("PostgreSQL connection is closed")
-'''
+
+class ConnectionPool(DBConnection):
+
+    def __init__(self):
+        connection = DBConnection()
+        self.connection_pool = {'available':[], 'used':[]}
+        for _ in range(10):
+            self.connection_pool.get('available','').append(connection)
+        
+
+    
+    def get_connection(self):
+        if self.connection_pool.get('available',''):
+            connection = self.connection_pool.get('available','').pop()
+            self.connection_pool.get('used','').append(connection)
+            return connection
+        else:
+            if self.check_pool():
+                message = self.check_pool()
+                print(message)
+            else:
+                connection = DBConnection()
+                self.connection_pool.get('used').append(connection)
+                print(f"Connection added! Length used connection is: {len(self.connection_pool['used'])}")
+                return connection
+        
+    
+    def check_pool(self):
+        if len(self.connection_pool.get('available','')) + len(self.connection_pool.get('used','')) > 98:
+            return "There is to many connection in the pool"
+    
+    def terminate_unused_connection(self):
+        for used_connection in self.connection_pool['used']:
+            if len(self.connection_pool['used']) > 5:
+                used_connection = self.connection_pool['used'].pop()
+                del used_connection
+                print(f"Length of used is: {len(self.connection_pool['used'])}.")
+                 
+
+
+    def __str__(self) -> str:
+        return f"Connection pool has: {self.connection_pool}"
+        
+
 
 conn_pool = ConnectionPool()
 
-for _ in range(10):
-    a = DBConnection()
-    conn_pool.add_connection(a)
-    print(f"Is it available: {a.available}")
+for _ in range(40):
+    conn_pool.get_connection()
+
+print(f"this is len of available connection: {len(conn_pool.connection_pool['available'])} and this is len of used connection:{len(conn_pool.connection_pool['used'])}")
+
+conn_pool.terminate_unused_connection()
+    
+    
 
 
-print(conn_pool)
+print(f"this is len of available connection: {len(conn_pool.connection_pool['available'])} and this is len of used connection:{len(conn_pool.connection_pool['used'])}")
 
-
-a = DBConnection()
-print(a)
-a.close()
-del a
-try:
-    print(a)
-except NameError as e:
-    print("object doesn't exist!")
