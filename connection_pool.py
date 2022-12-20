@@ -65,27 +65,27 @@ class ConnectionPool(DBConnection):
             else:
                 connection = DBConnection()
                 self.connection_pool.get('used').append(connection)
-                print(f"Connection added! Length used connection is: {len(self.connection_pool['used'])}")
+                #print(f"Connection added! Length used connection is: {len(self.connection_pool['used'])}")
                 return connection
         
     
     def check_pool(self):
         if len(self.connection_pool.get('available','')) + len(self.connection_pool.get('used','')) > 98:
             return "There is to many connection in the pool"
+        elif len(self.connection_pool.get('available','')) > 30:
+            self.terminate_unused_connection()
     
     def terminate_unused_connection(self):
         for used_connection in self.connection_pool['used']:
             if len(self.connection_pool['used']) > 5:
                 used_connection = self.connection_pool['used'].pop()
                 del used_connection
-                print(f"Length of used is: {len(self.connection_pool['used'])}.")
-                 
-
+                #print(f"Length of used is: {len(self.connection_pool['used'])}.")
 
     def __str__(self) -> str:
         return f"Connection pool has: {self.connection_pool}"
         
-
+'''
 
 conn_pool = ConnectionPool()
 
@@ -100,4 +100,4 @@ conn_pool.terminate_unused_connection()
 
 
 print(f"this is len of available connection: {len(conn_pool.connection_pool['available'])} and this is len of used connection:{len(conn_pool.connection_pool['used'])}")
-
+'''
