@@ -67,6 +67,10 @@ class ConnectionPool(DBConnection):
                 self.connection_pool.get('used').append(connection)
                 #print(f"Connection added! Length used connection is: {len(self.connection_pool['used'])}")
                 return connection
+    
+    def return_connection(self, connection):
+        self.connection_pool.get('available','').append(connection)
+        
         
     
     def check_pool(self):
