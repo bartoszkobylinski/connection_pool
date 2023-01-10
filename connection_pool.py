@@ -12,8 +12,12 @@ class DBConnection:
         self.host = host
         self.port = port
         self.database = database
-        self._connection = psycopg2.connect(user=self.user, host=self.host, port=self.port, database=self.database)
-        self._cursor = self._connection.cursor()
+        try:
+            self._connection = psycopg2.connect(user=self.user, host=self.host, port=self.port, database=self.database)
+            self._cursor = self._connection.cursor()
+        except psycopg2.OperationalError as error:
+            #This error is handling in another part of code so to aviod double here is just passed.
+            pass
         self.timelife = None
         self.available = True
 
@@ -41,6 +45,7 @@ class DBConnection:
 
     def __str__(self):
         return f"Connection established with database: {self.database} at host: {self.host} on port: {self.port}"
+        
 
 
 class ConnectionPool(DBConnection):
@@ -95,20 +100,3 @@ class ConnectionPool(DBConnection):
 
     def __str__(self) -> str:
         return f"Connection pool has: {self.connection_pool}"
-        
-'''
-
-conn_pool = ConnectionPool()
-
-for _ in range(40):
-    conn_pool.get_connection()
-
-print(f"this is len of available connection: {len(conn_pool.connection_pool['available'])} and this is len of used connection:{len(conn_pool.connection_pool['used'])}")
-
-conn_pool.terminate_unused_connection()
-    
-    
-
-
-print(f"this is len of available connection: {len(conn_pool.connection_pool['available'])} and this is len of used connection:{len(conn_pool.connection_pool['used'])}")
-'''
